@@ -1,0 +1,92 @@
+To add Kotlin to your project, do the following:
+
+Click File > New, and choose one of the various Android templates, such as a new blank Fragment.
+
+In the wizard that appears, choose Kotlin for the Source Language. Figure 2 shows the New Android Activity dialog for when you want to create a new 
+activity.
+
+Continue through the wizard.
+
+Alternatively, you can click File > New > Kotlin File/Class to create a basic Kotlin file. If you don't see this option, open the Project window and 
+select the java directory. The New Kotlin File/Class window lets you define the file name and provides several choices for the file type: File, Class,
+ Interface, Enum Class, or Object. The choice you make determines the basic scaffolding created for you in the new Kotlin file. If you choose Class, 
+Android Studio creates a new Kotlin source file with the given name and a matching class definition. If you choose Interface, an interface is 
+declared in the file, and so on.
+
+If this is the first time you have added a new Kotlin class or file to your project directly (not using the Android templates), Android Studio 
+displays a warning that Kotlin is not configured in the project, as shown in figure 3. Configure Kotlin by clicking Configure either in the upper 
+right corner of the editor or in the event log alert that pops up in the lower-right corner.
+
+Choose the option to configure Kotlin for All modules containing Kotlin files when prompted.
+
+Once you click OK, Android Studio adds Kotlin to your project classpath and applies the Kotlin Android plugin to each module that contains Kotlin 
+files.
+
+To convert Java code to Kotlin, open the Java file in Android Studio, and select Code > Convert Java File to Kotlin File. Alternatively, create a 
+new Kotlin file (File > New > Kotlin File/Class), and then paste your Java code into that file. Android Studio then displays a prompt and offers to 
+convert your code to Kotlin.
+
+Click Yes to convert. You can optionally check Don't show this dialog next time, which makes future conversions automatic.
+
+Android Studio's conversion process produces functionally-equivalent Kotlin code that compiles and runs. However, it's likely that you need to make 
+additional optimizations to the converted code. For example, you might want to refine how the converted code handles nullable types.
+
+In Android, it is common to delay initialization of View objects and other components until the fragment or activity they are attached to reaches 
+the appropriate lifecycle state.
+
+public class JavaFragment extends Fragment {
+
+    // Null until onCreateView.
+    private Button button;
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View root = inflater.inflate(R.layout.fragment_content, container,false);
+
+        // Get a reference to the button in the view, only after the root view is inflated.
+        button = root.findViewById(R.id.button);
+
+        return root;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // Not null at this point of time when onViewCreated runs
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ...
+            }
+        });
+    }
+}
+
+Even though the button variable is nullable, for all practical purposes it should never be null when used in this example. However, since its value 
+is not assigned at the point of construction, the generated Kotlin code treats Button as a nullable type and uses the non-null assertion operator 
+to unwrap the button when adding a click listener, as shown below:
+
+class JavaFragment : Fragment() {
+
+    // Null until onCreateView.
+    private var button: Button? = null
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+            savedInstanceState: Bundle?): View? {
+        ...
+        // Get a reference to the button in the view, only after the root view is inflated.
+        button = root.findViewById(R.id.button)
+        ...
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // Not null at the point of time when onViewCreated fires 
+        // but force unwrapped nonetheless
+        button!!.setOnClickListener { }
+    }
+}
+
